@@ -490,6 +490,9 @@
         <span>•</span>
         <span>🔄 Uygulama İçi Otomatik Güncelleme</span>
       </div>
+      <div style="margin-top: 8px; padding: 8px 14px; border-radius: 10px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.22); font-size: 12.5px; color: #CBD5E1; max-width: 680px; line-height: 1.5;">
+        💡 <strong>Kurulum Notu:</strong> İlk kurulumda Windows SmartScreen uyarısı çıkarsa <strong style="color: #38BDF8;">"Ek bilgi (More info)" → "Yine de çalıştır (Run anyway)"</strong> seçeneğine tıklayarak kuruluma devam edebilirsiniz.
+      </div>
     </div>
 
     <div class="npcap-banner">
@@ -579,6 +582,27 @@
     const OWNER = 'GokhanOzturkIO';
     const REPO = 'Aion-2-Companion';
 
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function isSafeGitHubDownloadUrl(rawUrl) {
+      try {
+        const u = new URL(String(rawUrl || ''));
+        return (
+          u.protocol === 'https:' &&
+          (u.hostname === 'github.com' || u.hostname.endsWith('.githubusercontent.com'))
+        );
+      } catch {
+        return false;
+      }
+    }
+
     async function loadLatestReleases() {
       try {
         const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/releases?per_page=5`);
@@ -593,7 +617,7 @@
         document.getElementById('navVersionBadge').textContent = `Güncel Sürüm: ${verText}`;
         document.getElementById('metaVersion').textContent = `📦 Sürüm: ${verText}`;
 
-        if (exeAsset) {
+        if (exeAsset && isSafeGitHubDownloadUrl(exeAsset.browser_download_url)) {
           const sizeMb = (exeAsset.size / (1024 * 1024)).toFixed(1);
           document.getElementById('downloadBtn').href = exeAsset.browser_download_url;
           document.getElementById('downloadBtnText').textContent = `Windows İçin İndir (${verText} .exe)`;
@@ -610,19 +634,21 @@
             return `
               <div class="release-item">
                 <div class="release-header">
-                  <div class="release-name">${i === 0 ? '⭐ ' : ''}${r.name || r.tag_name}</div>
-                  <div class="release-date">${dateStr}</div>
+                  <div class="release-name">${i === 0 ? '⭐ ' : ''}${escapeHtml(r.name || r.tag_name)}</div>
+                  <div class="release-date">${escapeHtml(dateStr)}</div>
                 </div>
-                <div class="release-notes">${cleanNotes}</div>
+                <div class="release-notes">${escapeHtml(cleanNotes)}</div>
               </div>
             `;
           })
           .join('');
       } catch (err) {
-        document.getElementById('navVersionBadge').textContent = 'v0.1.0-alpha.1';
+        document.getElementById('navVersionBadge').textContent = 'Güncel Sürüm (GitHub)';
+        document.getElementById('metaVersion').textContent = '📦 Sürüm: Son Sürüm (GitHub Releases)';
+        document.getElementById('downloadBtn').href = `https://github.com/${OWNER}/${REPO}/releases/latest`;
         document.getElementById('changelogContainer').innerHTML = `
           <div style="text-align: center; color: var(--text-muted); padding: 12px;">
-            Sürüm notlarını ve doğrudan indirme bağlantısını görüntülemek için GitHub reposunun <strong>Public</strong> olarak ayarlandığından emin olun.
+            Sürüm notlarını doğrudan görüntülemek için <a href="https://github.com/${OWNER}/${REPO}/releases/latest" target="_blank" rel="noopener noreferrer" style="color: var(--accent-blue);">GitHub Releases</a> sayfasını ziyaret edebilirsiniz.
           </div>
         `;
       }
